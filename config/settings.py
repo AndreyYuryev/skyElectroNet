@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
-from dataclasses import dataclass
+from datetime import timedelta
 import os
 from environs import Env
 
@@ -26,7 +26,7 @@ env.read_env(os.path.join(BASE_DIR, '.env'))
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_d87jweo2!!c0(b1j%eb_r92@jcx(0l*#s1yuwf8y8tvggxs9@'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework_simplejwt',
     'users',
     'electronet',
 ]
@@ -83,8 +84,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('POSTGRES_DB'),  # Название БД
+        'USER': env('POSTGRES_USER'),  # Пользователь для подключения
+        'PASSWORD': env('POSTGRES_PASSWORD'),  # Пароль для этого пользователя
+        'HOST': env('POSTGRES_HOST'),  # Адрес, на котором развернут сервер БД
+        'PORT': env('POSTGRES_PORT'),  # Порт, на котором работает сервер БД
     }
 }
 
@@ -111,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru-ru'
 
-TIME_ZONE = 'Moscow'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -122,6 +129,12 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+STATICFILES_DIRS = (
+    BASE_DIR / 'static',
+)
+
+STATIC_ROOT = os.path.join(BASE_DIR, '/static/')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
@@ -131,3 +144,19 @@ MEDIA_ROOT = BASE_DIR / 'media'
 MEDIA_URL = '/media/'
 
 AUTH_USER_MODEL = 'users.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny',),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
