@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from electronet.models import Company, Product, Deliveries
+from electronet.models import Company, Product
 from electronet.utils import COMPANY_TYPE, TYPE_PLANT, TYPE_RETAIL, TYPE_ENTREPRENEUR
 
 
@@ -28,11 +28,11 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class DeliveriesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Deliveries
-        fields = "__all__"
-        read_only_fields = ['debt', 'level', ]
-        # extra_kwargs = {
-        #     'debt': {'write_only': True},
-        # }
+# class DeliveriesSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Deliveries
+#         fields = "__all__"
+#         read_only_fields = ['debt', 'level', ]
+#         # extra_kwargs = {
+#         #     'debt': {'write_only': True},
+#         # }

@@ -1,5 +1,6 @@
 from django.db import models
 from electronet.utils import NULLABLE, COMPANY_TYPE
+from django.conf import settings
 
 
 class Company(models.Model):
@@ -10,6 +11,7 @@ class Company(models.Model):
     street = models.CharField(max_length=255, verbose_name='улица', **NULLABLE)
     house = models.CharField(max_length=32, verbose_name='номер дома', **NULLABLE)
     type = models.CharField(max_length=1, choices=COMPANY_TYPE, verbose_name='тип компании')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='время создания')
 
     # is_manufacturer = models.BooleanField(default=False, verbose_name='компания-производитель')
 
@@ -22,34 +24,78 @@ class Company(models.Model):
 
 
 class Product(models.Model):
+    model = models.CharField(unique=True, max_length=100, verbose_name='модель')
     name = models.CharField(max_length=100, verbose_name='продукт')
-    model = models.CharField(max_length=100, verbose_name='модель')
     description = models.CharField(max_length=255, verbose_name='описание продукта', **NULLABLE)
     launch_date = models.DateField(verbose_name='дата выхода на рынок', **NULLABLE)
     manufacturer = models.ForeignKey(Company, on_delete=models.CASCADE, verbose_name='производитель')
+    is_active = models.BooleanField(default=True, verbose_name='продукт производится')
 
     def __str__(self):
-        return f'{self.name} - {self.description}'
+        return f'{self.name} - {self.model}: {self.description}'
 
     class Meta:
         verbose_name = 'Продукт'
         verbose_name_plural = 'Продукты'
 
 
-class Deliveries(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='продукт')
-    supplier = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='supplier',
+class Debt(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='debt_company', verbose_name='компания')
+    supplier = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='debt_supplier',
                                  verbose_name='поставщик')
-    # supplier = models.ManyToManyField(Company, verbose_name='поставщик')
-    recipient = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='recipient',
-                                  verbose_name='получатель')
-    # recipient = models.OneToOneField(Company, on_delete=models.CASCADE, verbose_name='получатель')
     debt = models.DecimalField(decimal_places=2, max_digits=16, verbose_name='задолженность', default=0)
-    created_at = models.DateField(auto_now_add=True, verbose_name='дата создания')
-    level = models.IntegerField(default=1, verbose_name='уровень в иерархии')
 
     def __str__(self):
-        return f'{self.product} supplied from {self.supplier} to {self.recipient}'
+        return f'Задолженность {self.company} поставщику {self.supplier}'
+
+    class Meta:
+        verbose_name = 'Задолженность'
+        verbose_name_plural = 'Задолженности'
+
+
+class Payment(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='payment_company',
+                                verbose_name='компания')
+    supplier = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='payment_supplier',
+                                 verbose_name='поставщик')
+    payment = models.DecimalField(decimal_places=2, max_digits=16, verbose_name='списание задолженности', default=0)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='время списания')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Автор',
+                                   **NULLABLE)
+
+    def __str__(self):
+        return f'Списание задолженности компании {self.company} поставщику {self.supplier}'
+
+    class Meta:
+        verbose_name = 'Списание задолженности'
+        verbose_name_plural = 'Списание задолженностей'
+
+
+class DeliveryNet(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='delivery_company',
+                                verbose_name='компания')
+    supplier = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='delivery_supplier',
+                                 verbose_name='поставщик')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='продукт')
+    level = models.IntegerField(default=0, verbose_name='уровень в иерархии поставок')
+
+    def __str__(self):
+        return f'Поставщик {self.supplier} > получатель {self.company} /{self.product}/'
+
+    class Meta:
+        verbose_name = 'Поставщик'
+        verbose_name_plural = 'Поставщики'
+
+
+class Delivery(models.Model):
+    delivery_net = models.ForeignKey(DeliveryNet, on_delete=models.CASCADE, verbose_name='сеть поставщика')
+    value = models.DecimalField(decimal_places=2, max_digits=16, verbose_name='сумма поставки', default=0)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='дата создания')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Автор',
+                                   **NULLABLE)
+
+    def __str__(self):
+        return f'Поставка на сумму {self.value} {self.delivery_net} '
 
     class Meta:
         verbose_name = 'Поставка'
