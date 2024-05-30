@@ -18,6 +18,18 @@ class CompanyAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    def save_model(self, request, obj, form, change):
+        """ Дективировать цепочку поставки ниже этой компании для всех продуктов """
+        if not obj.is_active:
+            company = Company.objects.filter(pk=obj.pk).first()
+            if company:
+                for item in DeliveryNet.objects.filter(supplier=obj.pk):
+                    for elm in DeliveryNet.objects.filter(product=item.product.pk):
+                        if elm.level >= item.level:
+                            elm.is_active = False
+                            elm.save()
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):

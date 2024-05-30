@@ -5,7 +5,6 @@ def create_hierarchy(from_pk: int, to_pk: int, prod_pk: int, is_active: bool) ->
     dlv_net = DeliveryNet.objects.filter(product=prod_pk)
     level = 1
     sorted_dlv_net = sorted(dlv_net, key=lambda x: x.level)
-    print("hierarchy", sorted_dlv_net)
     dlv = DeliveryNet.objects.filter(company=to_pk, supplier=from_pk, product=prod_pk).first()
     if dlv:
         level = dlv.level
@@ -13,8 +12,13 @@ def create_hierarchy(from_pk: int, to_pk: int, prod_pk: int, is_active: bool) ->
 
         if dlv.is_active != is_active:
             if is_active:
+                company = Company.objects.filter(pk=to_pk).first()
+                if not company.is_active:
+                    return False, 'Получатель не активен', level
+                supplier = Company.objects.filter(pk=from_pk).first()
+                if not supplier.is_active:
+                    return False, 'Поставщик не активен', level
                 for item in sorted_dlv_net:
-                    print('L', item.level, level, item.is_active)
                     if item.level < level and not item.is_active:
                         # элемент ниже деактивирован
                         return False, 'Элемент выше по иерархии деактивирован', level
@@ -48,17 +52,15 @@ def create_hierarchy(from_pk: int, to_pk: int, prod_pk: int, is_active: bool) ->
             # сеть существует
             for item in sorted_dlv_net:
                 if item.company.pk == to_pk:
-                    return False, 'для этого элемента уже есть поставщик этого продукта', level
+                    return False, 'Для этого элемента уже есть поставщик этого продукта', level
                 if item.supplier.pk == from_pk:
-                    return False, 'для этого поставщика уже есть покупатель этого продукта', level
+                    return False, 'Для этого поставщика уже есть покупатель этого продукта', level
             for item in sorted_dlv_net:
-                print('N', item.company.pk, from_pk)
                 if item.company.pk == from_pk:
                     level = item.level + 1
                     return True, '', level
             else:
                 # создание элемента невозможно
-                return False, 'завод уже зарегистрирован в сети продукта', level
-
-        # создание элемента невозможно
-        return False, 'Создание элемента в сети продукта невозможно', level
+                return False, 'Завод уже зарегистрирован в сети продукта', level
+        # # создание элемента невозможно
+        # return False, 'Создание элемента в сети продукта невозможно', level
