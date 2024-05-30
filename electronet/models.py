@@ -77,8 +77,8 @@ class DeliveryNet(models.Model):
     supplier = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='delivery_supplier',
                                  verbose_name='поставщик')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='продукт')
-    level = models.IntegerField(default=0, verbose_name='уровень в иерархии поставок')
-    is_active = models.BooleanField(default=True, verbose_name='сеть поставки активна')
+    level = models.IntegerField(default=0, verbose_name='уровень в иерархии сети')
+    is_active = models.BooleanField(default=True, verbose_name='элемент сети активен')
 
     def __str__(self):
         return f'Поставщик {self.supplier} > получатель {self.company} /{self.product}/ Уровень {self.level}'

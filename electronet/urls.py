@@ -17,14 +17,15 @@ Including another URLconf
 from django.urls import path, include
 from electronet.apps import ElectronetConfig
 from rest_framework.routers import DefaultRouter
-from electronet.views import ProductViewSet, CompanyViewSet
+from electronet.views import ProductViewSet, CompanyViewSet, DebtViewSet
 
 app_name = ElectronetConfig.name
 
 router = DefaultRouter()
 router.register(r'product', ProductViewSet, basename='product')
 router.register(r'company', CompanyViewSet, basename='company')
-# router.register(r'deliveries', DeliveriesViewSet, basename='deliveries')
+router.register(r'debt', DebtViewSet, basename='debt')
+# router.register(r'delivery', DeliveryViewSet, basename='delivery')
 
 urlpatterns = [
     # path('api/v1/public/', PublicHabitListAPIView.as_view(), name='public-list'),

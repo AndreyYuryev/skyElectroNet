@@ -1,6 +1,6 @@
 from rest_framework import viewsets, generics
-from electronet.models import Product, Company
-from electronet.serializers import ProductSerializer, CompanySerializer
+from electronet.models import Product, Company, Delivery, Debt
+from electronet.serializers import ProductSerializer, CompanySerializer, DeliverySerializer, DebtSerializer
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -13,6 +13,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()
 
 
-# class DeliveriesViewSet(viewsets.ModelViewSet):
-#     serializer_class = DeliveriesSerializer
-#     queryset = Deliveries.objects.all()
+# class DeliveryViewSet(viewsets.ModelViewSet):
+class DebtViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = DebtSerializer
+    queryset = Debt.objects.all()

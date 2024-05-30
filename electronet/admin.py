@@ -63,6 +63,7 @@ class DeliveryNetAdmin(admin.ModelAdmin):
     list_display = ('supplier', 'company', 'product', 'level', 'is_active',)
     fields = ('supplier', 'company', 'product', 'level', 'is_active',)
     ordering = ['product', 'level', ]
+    list_filter = ["supplier__city"]
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
