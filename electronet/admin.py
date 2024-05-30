@@ -1,18 +1,21 @@
 from django.contrib import admin
 from electronet.models import Product, Company, DeliveryNet, Debt, Delivery, Payment
-from electronet.utils import TYPE_PLANT
+from electronet.utils import TYPE_PLANT, TYPE_RETAIL, TYPE_ENTREPRENEUR
 from django.contrib import messages
 
 
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ('name', 'email', 'country', 'city', 'street', 'house', 'type',)
+    list_display = ('name', 'email', 'country', 'city', 'street', 'house', 'type', 'is_active',)
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
             return ["type", ]
         else:
             return []
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Product)
@@ -33,22 +36,65 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(DeliveryNet)
 class DeliveryNetAdmin(admin.ModelAdmin):
-    list_display = ('company', 'supplier', 'product', 'level',)
-    readonly_fields = ('level',)
+    list_display = ('supplier', 'company', 'product', 'level', 'is_active',)
+    fields = ('supplier', 'company', 'product', 'level', 'is_active',)
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['company', 'supplier', 'product', 'level']
+        else:
+            return ['level', ]
+
+    def formfield_for_foreignkey(self, db_field, request, **kwargs):
+        if db_field.name == "company":
+            kwargs["queryset"] = Company.objects.filter(type__in=[TYPE_RETAIL, TYPE_ENTREPRENEUR], is_active=True)
+            # print(kwargs)
+            return super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == 'supplier':
+            kwargs["queryset"] = Company.objects.filter(is_active=True)
+            # print(kwargs)
+            return super().formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == 'product':
+            kwargs["queryset"] = Product.objects.filter(is_active=True)
+            #     print(kwargs)
+            return super().formfield_for_foreignkey(db_field, request, **kwargs)
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def save_model(self, request, obj, form, change):
-        if obj.company.type != TYPE_PLANT:
-            super().save_model(request, obj, form, change)
-            # else:
-            messages.add_message(request, messages.ERROR, 'Завод не может выступать в роли получателя')
+        """ Обработать создание/изменение элемента сети """
+        company_from = obj.supplier.pk
+        company_to = obj.company.pk
+        product = obj.product.pk
+        dlv = DeliveryNet.objects.filter(company=company_to, supplier=company_from, product=product).first()
+        if dlv:
+            if not obj.is_active:
+                print('Деактивировать цепочку')
+            elif dlv.is_active != obj.is_active:
+                print('Активировать элемент')
+            else:
+                messages.set_level(request, messages.ERROR)
+                messages.add_message(request, messages.ERROR, 'Элемент сети существует')
+                return False
+        # net = DeliveryNet.objects.filter(product=obj.product.pk)
+        # for item in net:
+        #     if item.supplier.pk == company_from:
+        #         messages.add_message(request, messages.ERROR, 'Для компании уже есть поставщик')
+        #         return False
+        # print('!o', obj, '!f', form, '!c', change)
+        # if obj.company.type != TYPE_PLANT:
+        #     super().save_model(request, obj, form, change)
+        # else:
+        #     messages.add_message(request, messages.ERROR, 'Завод не может выступать в роли получателя')
+        super().save_model(request, obj, form, change)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Delivery)
 class DeliveryAdmin(admin.ModelAdmin):
     list_display = ('delivery_net', 'value', 'created_at', 'created_by',)
     readonly_fields = ('created_by',)
-
-    # fields = ('delivery_net', 'value', 'created_at', )
 
     def get_fields(self, request, obj=None):
         if obj:
@@ -102,12 +148,15 @@ class DebtAdmin(admin.ModelAdmin):
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('company', 'supplier', 'payment', 'created_at', 'created_by',)
-    readonly_fields = ('company', 'supplier', 'payment', 'created_at', 'created_by',)
+    list_display = ('supplier', 'company', 'payment', 'created_at', 'created_by',)
+    readonly_fields = ('supplier', 'company', 'payment', 'created_at', 'created_by',)
 
     # actions = ['clear_debt', ]
 
     def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False
 
     def has_add_permission(self, request, obj=None):

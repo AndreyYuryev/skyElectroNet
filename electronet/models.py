@@ -12,6 +12,7 @@ class Company(models.Model):
     house = models.CharField(max_length=32, verbose_name='номер дома', **NULLABLE)
     type = models.CharField(max_length=1, choices=COMPANY_TYPE, verbose_name='тип компании')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='время создания')
+    is_active = models.BooleanField(default=True, verbose_name='компания активна')
 
     # is_manufacturer = models.BooleanField(default=False, verbose_name='компания-производитель')
 
@@ -30,6 +31,7 @@ class Product(models.Model):
     launch_date = models.DateField(verbose_name='дата выхода на рынок', **NULLABLE)
     manufacturer = models.ForeignKey(Company, on_delete=models.CASCADE, verbose_name='производитель')
     is_active = models.BooleanField(default=True, verbose_name='продукт производится')
+
 
     def __str__(self):
         return f'{self.name} - {self.model}: {self.description}'
@@ -78,6 +80,7 @@ class DeliveryNet(models.Model):
                                  verbose_name='поставщик')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='продукт')
     level = models.IntegerField(default=0, verbose_name='уровень в иерархии поставок')
+    is_active = models.BooleanField(default=True, verbose_name='сеть поставки активна')
 
     def __str__(self):
         return f'Поставщик {self.supplier} > получатель {self.company} /{self.product}/'
