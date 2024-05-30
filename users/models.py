@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from electronet.utils import NULLABLE
+from electronet.constants import NULLABLE
 
 
 class User(AbstractUser):

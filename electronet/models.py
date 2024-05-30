@@ -1,5 +1,5 @@
 from django.db import models
-from electronet.utils import NULLABLE, COMPANY_TYPE
+from electronet.constants import NULLABLE, COMPANY_TYPE
 from django.conf import settings
 
 
@@ -13,8 +13,6 @@ class Company(models.Model):
     type = models.CharField(max_length=1, choices=COMPANY_TYPE, verbose_name='тип компании')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='время создания')
     is_active = models.BooleanField(default=True, verbose_name='компания активна')
-
-    # is_manufacturer = models.BooleanField(default=False, verbose_name='компания-производитель')
 
     def __str__(self):
         return f'{self.name}'
@@ -83,7 +81,7 @@ class DeliveryNet(models.Model):
     is_active = models.BooleanField(default=True, verbose_name='сеть поставки активна')
 
     def __str__(self):
-        return f'Поставщик {self.supplier} > получатель {self.company} /{self.product}/'
+        return f'Поставщик {self.supplier} > получатель {self.company} /{self.product}/ Уровень {self.level}'
 
     class Meta:
         verbose_name = 'Поставщик'
@@ -93,8 +91,8 @@ class DeliveryNet(models.Model):
 class Delivery(models.Model):
     delivery_net = models.ForeignKey(DeliveryNet, on_delete=models.CASCADE, verbose_name='сеть поставщика')
     value = models.DecimalField(decimal_places=2, max_digits=16, verbose_name='сумма поставки', default=0)
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='дата создания')
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Автор',
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='время создания')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='автор',
                                    **NULLABLE)
 
     def __str__(self):

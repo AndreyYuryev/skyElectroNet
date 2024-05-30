@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from electronet.models import Company, Product
-from electronet.utils import COMPANY_TYPE, TYPE_PLANT, TYPE_RETAIL, TYPE_ENTREPRENEUR
+from electronet.constants import COMPANY_TYPE, TYPE_PLANT, TYPE_RETAIL, TYPE_ENTREPRENEUR
 
 
 class CompanySerializer(serializers.ModelSerializer):
