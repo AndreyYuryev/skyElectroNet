@@ -61,6 +61,7 @@ class ProductAdmin(admin.ModelAdmin):
 @admin.register(DeliveryNet)
 class DeliveryNetAdmin(admin.ModelAdmin):
     list_display = ('supplier', 'company', 'product', 'level', 'is_active',)
+    search_fields = ('supplier__name', 'company__name', 'supplier__city',)
     fields = ('supplier', 'company', 'product', 'level', 'is_active',)
     ordering = ['product', 'level', ]
     list_filter = ["supplier__city"]

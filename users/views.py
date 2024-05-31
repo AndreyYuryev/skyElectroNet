@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 from users.models import User
 from users.serializers import UserSerializer
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from users.permissions import IsActiveUser, IsCurrentUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from users.permissions import IsCurrentUser
 
 
 class UserViewSet(viewsets.ModelViewSet):

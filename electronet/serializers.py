@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from electronet.models import Company, Product, Delivery, Debt
+from electronet.models import Company, Product, Delivery, Debt, DeliveryNet
 from electronet.constants import COMPANY_TYPE, TYPE_PLANT, TYPE_RETAIL, TYPE_ENTREPRENEUR
 
 
@@ -10,13 +10,9 @@ class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
         fields = "__all__"
-        # extra_kwargs = {
-        #     'password': {'write_only': True}
-        # }
-        # read_only_fields = [
-        #     'is_staff', 'is_superuser', 'is_active',
-        #     # 'date_joined', 'last_login', 'groups', 'user_permissions',
-        # ]
+        read_only_fields = [
+            'type', 'created_at',
+        ]
 
     def get_is_manufacturer(self, instance):
         if instance.type == TYPE_PLANT:
@@ -32,9 +28,14 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = "__all__"
+        read_only_fields = [
+            'model', 'manufaturef', 'launch_date',
+        ]
 
 
 class DeliverySerializer(serializers.ModelSerializer):
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
     class Meta:
         model = Delivery
         fields = "__all__"
@@ -46,18 +47,33 @@ class DebtSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Debt
-        fields = ['supplier', 'company_from', 'company',  'company_to', 'debt', ]
+        fields = ['supplier', 'company_from', 'company', 'company_to', 'debt', ]
 
     def get_company_from(self, instance):
         return Company.objects.filter(pk=instance.supplier.pk).first().name
 
     def get_company_to(self, instance):
         return Company.objects.filter(pk=instance.company.pk).first().name
-# class DeliveriesSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Deliveries
-#         fields = "__all__"
-#         read_only_fields = ['debt', 'level', ]
-#         # extra_kwargs = {
-#         #     'debt': {'write_only': True},
-#         # }
+
+
+class DeliveryNetSerializer(serializers.ModelSerializer):
+    company_from = serializers.SerializerMethodField()
+    company_to = serializers.SerializerMethodField()
+    product_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DeliveryNet
+        fields = ['id', 'supplier', 'company_from', 'company', 'company_to', 'product', 'product_name', 'level',
+                  'is_active']
+        read_only_fields = [
+            'id', 'supplier', 'company_from', 'company', 'company_to', 'product', 'product_name', 'level',
+        ]
+
+    def get_company_from(self, instance):
+        return Company.objects.filter(pk=instance.supplier.pk).first().name
+
+    def get_company_to(self, instance):
+        return Company.objects.filter(pk=instance.company.pk).first().name
+
+    def get_product_name(self, instance):
+        return Product.objects.filter(pk=instance.product.pk).first().name
